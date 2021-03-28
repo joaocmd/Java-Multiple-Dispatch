@@ -1,5 +1,6 @@
 package ist.meic.pava.MultipleDispatch;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -7,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OneVariadicArgumentTest {
     @Test
+    @Disabled
     @DisplayName("Project Statement First Example")
     public void testProjectStatementFirstExample() {
         String[] results = new String[] {
