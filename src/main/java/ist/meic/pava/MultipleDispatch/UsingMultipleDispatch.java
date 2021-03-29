@@ -17,7 +17,7 @@ public class UsingMultipleDispatch {
      * @param args            the arguments to pass to the method
      * @return                    the object returned by the method called
      */
-    static Object invoke(Object receiver, String name, Object... args) {
+    public static Object invoke(Object receiver, String name, Object... args) {
         try {
             // Get class type of each Object in args
             List<Class<?>> argTypesList = Arrays.stream(args)

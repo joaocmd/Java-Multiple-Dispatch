@@ -2,74 +2,78 @@ package ist.meic.pava.MultipleDispatch;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class OneArgumentTest {
-    @Test
-    @DisplayName("Project Statement First Example")
-    public void testProjectStatementFirstExample() {
-        String[] results = new String[] {
-                "drawing a line on screen!",
-                "drawing a circle on screen!",
-                "drawing a line on printer!",
-                "drawing a circle on printer!",
-        };
-
-        Device[] devices = new Device[] { new Screen(), new Printer() };
-        Shape[] shapes = new Shape[] { new Line(), new Circle() };
-        int i = 0;
-        for (Device device : devices) {
-            for (Shape shape : shapes) {
-                String res = (String) UsingMultipleDispatch.invoke(device, "draw", shape);
-                assertEquals(res, results[i]);
-                i++;
-            }
-        }
+    @ParameterizedTest
+    @MethodSource("firstExampleTestCaseProvider")
+    public void projectStatementFirstExample(Device dev, Shape shape, String expected) {
+        String res = (String) UsingMultipleDispatch.invoke(dev, "draw", shape);
+        assertEquals(expected, res);
     }
 
-    class Shape { }
-    class Line extends Shape { }
-    class Circle extends Shape { }
+    @ParameterizedTest
+    @MethodSource("firstExampleTestCaseProvider")
+    public void projectStatementFirstExampleExtended(Device dev, Shape shape, String expected) {
+        String res = (String) ist.meic.pava.UsingMultipleDispatchExtended.UsingMultipleDispatch.invoke(dev, "draw", shape);
+        assertEquals(expected, res);
+    }
 
-    class Device {
-        public String draw(OneArgumentTest.Shape s) {
+    private static Stream<Arguments> firstExampleTestCaseProvider() {
+        return Stream.of(
+            Arguments.of(new Screen(), new Line(), "drawing a line on screen!"),
+            Arguments.of(new Screen(), new Circle(), "drawing a circle on screen!"),
+            Arguments.of(new Printer(), new Line(), "drawing a line on printer!"),
+            Arguments.of(new Printer(), new Circle(), "drawing a circle on printer!")
+        );
+    }
+
+    public static class Shape { }
+    public static class Line extends Shape { }
+    public static class Circle extends Shape { }
+
+    public static class Device {
+        public String draw(Shape s) {
             return "draw what where?";
         }
 
-        public String draw(OneArgumentTest.Line l) {
+        public String draw(Line l) {
             return "draw a line where?";
         }
 
-        public String draw(OneArgumentTest.Circle c) {
+        public String draw(Circle c) {
             return "draw a circle where?";
         }
     }
 
-    class Screen extends Device {
-        public String draw(OneArgumentTest.Shape s) {
+    public static class Screen extends Device {
+        public String draw(Shape s) {
             return "draw what on screen?";
         }
 
-        public String draw(OneArgumentTest.Line l) {
+        public String draw(Line l) {
             return "drawing a line on screen!";
         }
 
-        public String draw(OneArgumentTest.Circle c) {
+        public String draw(Circle c) {
             return "drawing a circle on screen!";
         }
     }
 
-    class Printer extends Device {
-        public String draw(OneArgumentTest.Shape s) {
+    public static class Printer extends Device {
+        public String draw(Shape s) {
             return "draw what on screen?";
         }
 
-        public String draw(OneArgumentTest.Line l) {
+        public String draw(Line l) {
             return "drawing a line on printer!";
         }
 
-        public String draw(OneArgumentTest.Circle c) {
+        public String draw(Circle c) {
             return "drawing a circle on printer!";
         }
     }
