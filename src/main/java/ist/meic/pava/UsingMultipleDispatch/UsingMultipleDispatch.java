@@ -18,8 +18,8 @@ public class UsingMultipleDispatch {
     static Object invoke(Object receiver, String name, Object... args) {
         try {
             // Get class type of each Object in args
-            List<Class> argTypesList = Arrays.stream(args).map(Object::getClass).collect(Collectors.toList());
-            Class[] argTypes = new Class[argTypesList.size()];
+            List<Class<?>> argTypesList = Arrays.stream(args).map(Object::getClass).collect(Collectors.toList());
+            Class<?>[] argTypes = new Class[argTypesList.size()];
             argTypes = argTypesList.toArray(argTypes);
 
             Method method = bestMethod(receiver.getClass(), name, argTypes);
@@ -41,13 +41,13 @@ public class UsingMultipleDispatch {
      * @return          the specified Method
      * @throws NoSuchMethodException if no implementation was found
      */
-    static Method bestMethod(Class receiverType, String name, Class[] argTypes) throws NoSuchMethodException {
+    static Method bestMethod(Class<?> receiverType, String name, Class<?>[] argTypes) throws NoSuchMethodException {
         // BFS over argument types
-        Queue<Class[]> queue = new ArrayDeque<>();
+        Queue<Class<?>[]> queue = new ArrayDeque<>();
         queue.add(argTypes);
 
         while (queue.peek() != null) {
-            Class[] currArgTypes = queue.poll();
+            Class<?>[] currArgTypes = queue.poll();
 
             try {
                 // this is the most specialized method available, use it
@@ -59,7 +59,7 @@ public class UsingMultipleDispatch {
             // enqueue more general argument types
             for (int i = 0; i < currArgTypes.length; i++) {
                 if (currArgTypes[i] != Object.class) {
-                    Class[] moreGeneralArgTypes = currArgTypes.clone();
+                    Class<?>[] moreGeneralArgTypes = currArgTypes.clone();
                     moreGeneralArgTypes[i] = currArgTypes[i].getSuperclass();
                     queue.add(moreGeneralArgTypes);
                 }
