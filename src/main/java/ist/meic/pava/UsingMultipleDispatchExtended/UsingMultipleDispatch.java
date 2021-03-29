@@ -29,13 +29,47 @@ public class UsingMultipleDispatch {
                 .map(xmethod -> xmethod.method)
                 .orElseThrow(() -> new NoSuchMethodException(buildNoSuchMethodExceptionMessage(receiver.getClass(), argTypes)));
 
-            return bestMethod.invoke(receiver, args);
+            return bestMethod.invoke(receiver, evaluateArguments(bestMethod, argTypes, args));
         } catch (IllegalAccessException
                 | InvocationTargetException
                 | NoSuchMethodException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+
+    private static boolean shouldBuildVarargsArray(Method method, Class<?>[] argTypes) {
+        // see https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.4.2
+        int k = argTypes.length;
+        int n = method.getParameterCount() - 1;
+
+        if (k != n) {
+            return true;
+        }
+
+        // k == n
+        Class<?>[] paramTypes = method.getParameterTypes();
+        return !paramTypes[paramTypes.length - 1].isAssignableFrom(argTypes[argTypes.length - 1]);
+    }
+
+    private static Object[] evaluateArguments(Method method, Class<?>[] argTypes, Object... args) {
+        if (method.isVarArgs() && shouldBuildVarargsArray(method, argTypes)) {
+            int nonVarargsCount =method.getParameterCount() - 1;
+            int varargsCount = args.length - nonVarargsCount;
+
+            Object[] varargs = new Object[varargsCount];
+            if (varargsCount != 0) {
+                System.arraycopy(args, nonVarargsCount, varargs, 0, varargsCount);
+            }
+
+            Object[] newargs = new Object[method.getParameterCount()];
+            System.arraycopy(args, 0, newargs, 0, nonVarargsCount);
+            newargs[nonVarargsCount] = varargs;
+
+            return newargs;
+        }
+
+        return args;
     }
 
     private static Class<?>[] getArgTypes(Object... args) {
