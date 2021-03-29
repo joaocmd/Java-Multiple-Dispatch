@@ -1,4 +1,4 @@
-package ist.meic.pava.MultipleDispatch;
+package ist.meic.pava.UsingMultipleDispatch;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

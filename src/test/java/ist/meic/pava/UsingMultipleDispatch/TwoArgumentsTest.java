@@ -1,4 +1,4 @@
-package ist.meic.pava.MultipleDispatch;
+package ist.meic.pava.UsingMultipleDispatch;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

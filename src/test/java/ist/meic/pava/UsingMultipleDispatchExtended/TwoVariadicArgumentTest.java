@@ -1,11 +1,11 @@
-package ist.meic.pava.MultipleDispatch;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+package ist.meic.pava.UsingMultipleDispatchExtended;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-public class OneArgumentTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class TwoVariadicArgumentTest {
     @Test
     @DisplayName("Project Statement First Example")
     public void testProjectStatementFirstExample() {
@@ -21,7 +21,7 @@ public class OneArgumentTest {
         int i = 0;
         for (Device device : devices) {
             for (Shape shape : shapes) {
-                String res = (String) UsingMultipleDispatch.invoke(device, "draw", shape);
+                String res = (String) UsingMultipleDispatch.invoke(device, "draw", 1, shape);
                 assertEquals(res, results[i]);
                 i++;
             }
@@ -33,43 +33,43 @@ public class OneArgumentTest {
     class Circle extends Shape { }
 
     class Device {
-        public String draw(OneArgumentTest.Shape s) {
+        public String draw(int i, Shape... s) {
             return "draw what where?";
         }
 
-        public String draw(OneArgumentTest.Line l) {
+        public String draw(int i, Line... l) {
             return "draw a line where?";
         }
 
-        public String draw(OneArgumentTest.Circle c) {
+        public String draw(int i, Circle... c) {
             return "draw a circle where?";
         }
     }
 
     class Screen extends Device {
-        public String draw(OneArgumentTest.Shape s) {
+        public String draw(int i, Shape... s) {
             return "draw what on screen?";
         }
 
-        public String draw(OneArgumentTest.Line l) {
+        public String draw(int i, Line... l) {
             return "drawing a line on screen!";
         }
 
-        public String draw(OneArgumentTest.Circle c) {
+        public String draw(int i, Circle... c) {
             return "drawing a circle on screen!";
         }
     }
 
     class Printer extends Device {
-        public String draw(OneArgumentTest.Shape s) {
+        public String draw(int i, Shape... s) {
             return "draw what on screen?";
         }
 
-        public String draw(OneArgumentTest.Line l) {
+        public String draw(int i, Line... l) {
             return "drawing a line on printer!";
         }
 
-        public String draw(OneArgumentTest.Circle c) {
+        public String draw(int i, Circle... c) {
             return "drawing a circle on printer!";
         }
     }
