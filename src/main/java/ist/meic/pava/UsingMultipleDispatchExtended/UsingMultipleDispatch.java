@@ -1,5 +1,6 @@
 package ist.meic.pava.UsingMultipleDispatchExtended;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -41,7 +42,7 @@ public class UsingMultipleDispatch {
     private static boolean shouldBuildVarargsArray(Method method, Class<?>[] argTypes) {
         // see https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.4.2
         int k = argTypes.length;
-        int n = method.getParameterCount() - 1;
+        int n = method.getParameterCount();
 
         if (k != n) {
             return true;
@@ -52,12 +53,14 @@ public class UsingMultipleDispatch {
         return !paramTypes[paramTypes.length - 1].isAssignableFrom(argTypes[argTypes.length - 1]);
     }
 
-    private static Object[] evaluateArguments(Method method, Class<?>[] argTypes, Object... args) {
+    private static Object[] evaluateArguments(Method method, Class<?>[] argTypes, Object... args) throws NegativeArraySizeException {
         if (method.isVarArgs() && shouldBuildVarargsArray(method, argTypes)) {
-            int nonVarargsCount =method.getParameterCount() - 1;
+            int nonVarargsCount = method.getParameterCount() - 1;
             int varargsCount = args.length - nonVarargsCount;
 
-            Object[] varargs = new Object[varargsCount];
+            Class<?> varargsType = method.getParameterTypes()[nonVarargsCount];
+            assert varargsType.isArray();
+            Object[] varargs = (Object[]) Array.newInstance(varargsType.getComponentType(), varargsCount);
             if (varargsCount != 0) {
                 System.arraycopy(args, nonVarargsCount, varargs, 0, varargsCount);
             }
