@@ -24,7 +24,7 @@ public class UsingMultipleDispatch {
                 .filter(method -> method.getParameterCount() == args.length
                         || (method.isVarArgs() && args.length >= method.getParameterCount() - 1))
                 .map(method -> XMethod.create(method, argTypes))
-                .filter(xmethod -> xmethod != null)
+                .filter(Objects::nonNull)
                 .max(new XMethodComparator())
                 .map(xmethod -> xmethod.method)
                 .orElseThrow(() -> new NoSuchMethodException(buildNoSuchMethodExceptionMessage(receiver.getClass(), argTypes)));

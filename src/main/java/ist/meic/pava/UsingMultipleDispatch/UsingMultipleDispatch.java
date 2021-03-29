@@ -53,7 +53,7 @@ public class UsingMultipleDispatch {
                 // this is the most specialized method available, use it
                 return receiverType.getMethod(name, currArgTypes);
             } catch (NoSuchMethodException e) {
-                System.err.println(e.getMessage());
+                // ignored
             }
 
             // enqueue more general argument types
