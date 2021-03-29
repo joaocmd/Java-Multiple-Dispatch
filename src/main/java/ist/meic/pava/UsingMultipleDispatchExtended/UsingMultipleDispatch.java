@@ -23,9 +23,9 @@ public class UsingMultipleDispatch {
                 .filter(method -> method.getName().equals(name))
                 .filter(method -> method.getParameterCount() == args.length
                         || (method.isVarArgs() && args.length >= method.getParameterCount() - 1))
-                .map(method -> XMethod.create(method, argTypes))
+                .map(method -> CandidateMethod.create(method, argTypes))
                 .filter(Objects::nonNull)
-                .max(new XMethodComparator())
+                .max(new CandidateMethodComparator())
                 .map(xmethod -> xmethod.method)
                 .orElseThrow(() -> new NoSuchMethodException(buildNoSuchMethodExceptionMessage(receiver.getClass(), argTypes)));
 
@@ -54,8 +54,8 @@ public class UsingMultipleDispatch {
                 ')';
     }
 
-    private static class XMethodComparator implements Comparator<XMethod> {
-        public int compare(XMethod a, XMethod b) {
+    private static class CandidateMethodComparator implements Comparator<CandidateMethod> {
+        public int compare(CandidateMethod a, CandidateMethod b) {
             int comp = -Integer.compare(a.upcastCount(), b.upcastCount());
             if (comp != 0) {
                 return comp;
@@ -73,16 +73,16 @@ public class UsingMultipleDispatch {
         }
     }
 
-    private static class XMethod {
+    private static class CandidateMethod {
         public Method method;
         public int[] upcasts;
 
-        private XMethod(Method method, int[] upcasts) {
+        private CandidateMethod(Method method, int[] upcasts) {
             this.method = method;
             this.upcasts = upcasts;
         }
 
-        static XMethod create(Method method, Class<?>[] argTypes) {
+        static CandidateMethod create(Method method, Class<?>[] argTypes) {
             int[] upcasts = new int[argTypes.length];
             Class<?>[] paramTypes = method.getParameterTypes();
 
@@ -122,7 +122,7 @@ public class UsingMultipleDispatch {
                 }
             }
 
-            return new XMethod(method, upcasts);
+            return new CandidateMethod(method, upcasts);
         }
 
         public int upcastCount() {
