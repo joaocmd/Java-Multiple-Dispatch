@@ -66,14 +66,12 @@ public class UsingMultipleDispatch {
             }
         }
 
-        StringBuilder msgBuilder = new StringBuilder();
-        msgBuilder.append(receiverType.getName())
-            .append('(')
-            .append(Arrays.stream(argTypes)
-                    .map(type -> type.getName())
-                    .collect(Collectors.joining(", ")))
-            .append(')');
-
-        throw new NoSuchMethodException(msgBuilder.toString());
+        String msg = receiverType.getName() +
+                '(' +
+                Arrays.stream(argTypes)
+                        .map(Class::getName)
+                        .collect(Collectors.joining(", ")) +
+                ')';
+        throw new NoSuchMethodException(msg);
     }
 }
