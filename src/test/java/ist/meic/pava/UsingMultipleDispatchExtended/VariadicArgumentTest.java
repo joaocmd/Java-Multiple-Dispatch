@@ -1,6 +1,5 @@
 package ist.meic.pava.UsingMultipleDispatchExtended;
 
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,15 +21,15 @@ public class VariadicArgumentTest {
 
         for (Device dev : new Device[] {device, printer}) {
             res = (String) UsingMultipleDispatch.invoke(d, "draw", dev);
-            assertEquals(res, "device with 0 shapes");
+            assertEquals("device with 0 shapes", res);
             res = (String) UsingMultipleDispatch.invoke(d, "draw", dev, shape);
-            assertEquals(res, "device with 1 shapes");
+            assertEquals("device with 1 shapes", res);
             res = (String) UsingMultipleDispatch.invoke(d, "draw", dev, shape, shape);
-            assertEquals(res, "device with 2 shapes");
+            assertEquals("device with 2 shapes", res);
             res = (String) UsingMultipleDispatch.invoke(d, "draw", dev, line, circle);
-            assertEquals(res, "device with 2 shapes");
+            assertEquals("device with 2 shapes", res);
             res = (String) UsingMultipleDispatch.invoke(d, "draw", dev, shape, circle, line);
-            assertEquals(res, "device with 3 shapes");
+            assertEquals("device with 3 shapes", res);
         }
     }
 
@@ -39,13 +38,13 @@ public class VariadicArgumentTest {
         String res;
 
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, shape);
-        assertEquals(res, "screen with 1 shapes");
-        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, circle);
-        assertEquals(res, "screen with 1 shapes");
-        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, shape, circle);
-        assertEquals(res, "screen with 2 shapes");
-        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, shape);
-        assertEquals(res, "screen with 2 shapes");
+        assertEquals("screen with 1 shapes", res);
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, shape, line);
+        assertEquals("screen with 2 shapes", res);
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, shape, shape);
+        assertEquals("screen with 2 shapes", res);
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, circle, shape);
+        assertEquals("screen with 2 shapes", res);
     }
 
     @Test
@@ -53,13 +52,13 @@ public class VariadicArgumentTest {
         String res;
 
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen);
-        assertEquals(res, "screen with 0 lines");
+        assertEquals("screen with 0 lines", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line);
-        assertEquals(res, "screen with 1 lines");
+        assertEquals("screen with 1 lines", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line);
-        assertEquals(res, "screen with 2 lines");
+        assertEquals("screen with 2 lines", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line, line);
-        assertEquals(res, "screen with 3 lines");
+        assertEquals("screen with 3 lines", res);
     }
 
     @Test
@@ -67,13 +66,13 @@ public class VariadicArgumentTest {
         String res;
 
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, shape, shape);
-        assertEquals(res, "screen with line and 2 shapes");
+        assertEquals("screen with line and 2 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, circle, line);
-        assertEquals(res, "screen with line and 2 shapes");
+        assertEquals("screen with line and 2 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, circle);
-        assertEquals(res, "screen with line and 1 shapes");
+        assertEquals("screen with line and 1 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line, circle, shape);
-        assertEquals(res, "screen with line and 3 shapes");
+        assertEquals("screen with line and 3 shapes", res);
     }
 
     @Test
@@ -81,7 +80,7 @@ public class VariadicArgumentTest {
         String res;
 
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, circle);
-        assertEquals(res, "screen with circle");
+        assertEquals("screen with circle", res);
     }
 
     @Test
@@ -89,7 +88,7 @@ public class VariadicArgumentTest {
         String res;
 
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line);
-        assertEquals(res, "screen with 2 lines");
+        assertEquals("screen with 2 lines", res);
     }
 
     @Test
@@ -97,7 +96,7 @@ public class VariadicArgumentTest {
         String res;
 
         res = (String) UsingMultipleDispatch.invoke(d, "draw", printer, line, circle, line);
-        assertEquals(res, "printer with line, circle and line");
+        assertEquals("printer with line, circle and line", res);
     }
 
     @Test
@@ -105,15 +104,15 @@ public class VariadicArgumentTest {
         String res;
 
         res = (String) UsingMultipleDispatch.invoke(d, "draw");
-        assertEquals(res, "0 shapes");
+        assertEquals("0 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", shape);
-        assertEquals(res, "1 shapes");
+        assertEquals("1 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", line, circle);
-        assertEquals(res, "2 shapes");
+        assertEquals("2 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", circle, shape);
-        assertEquals(res, "2 shapes");
+        assertEquals("2 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", circle, shape, line);
-        assertEquals(res, "3 shapes");
+        assertEquals("3 shapes", res);
     }
 
     static class Drawer {

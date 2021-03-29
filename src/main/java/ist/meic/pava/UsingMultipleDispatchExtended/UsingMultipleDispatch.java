@@ -26,7 +26,7 @@ public class UsingMultipleDispatch {
                         || (method.isVarArgs() && args.length >= method.getParameterCount() - 1))
                 .map(method -> CandidateMethod.create(method, argTypes))
                 .filter(Objects::nonNull)
-                .max(new CandidateMethodComparator())
+                .min(new CandidateMethodComparator())
                 .map(xmethod -> xmethod.method)
                 .orElseThrow(() -> new NoSuchMethodException(buildNoSuchMethodExceptionMessage(receiver.getClass(), argTypes)));
 
@@ -93,16 +93,22 @@ public class UsingMultipleDispatch {
 
     private static class CandidateMethodComparator implements Comparator<CandidateMethod> {
         public int compare(CandidateMethod a, CandidateMethod b) {
-            int comp = -Integer.compare(a.upcastCount(), b.upcastCount());
+            int comp = Integer.compare(a.upcastCount(), b.upcastCount());
             if (comp != 0) {
                 return comp;
             }
 
             for (int i = 0; i < a.upcasts.length && i < b.upcasts.length; i++) {
-                comp = -Integer.compare(a.upcasts[i], b.upcasts[i]);
+                comp = Integer.compare(a.upcasts[i], b.upcasts[i]);
                 if (comp != 0) {
                     return comp;
                 }
+            }
+
+            // indirect way of preferring methods without variadic arguments
+            comp = Integer.compare(a.method.getParameterCount(), b.method.getParameterCount());
+            if (comp != 0) {
+                return comp;
             }
 
             // we really can't do any better, just enforce any total order from here
