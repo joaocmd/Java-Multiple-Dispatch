@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class VariadicArgumentTest {
     @Test
-    @Disabled
     @DisplayName("Project Statement First Example")
     public void testVarArgs() {
         Device device = new Device();
@@ -39,12 +38,25 @@ public class VariadicArgumentTest {
         assertEquals(res, "screen with 1 shapes");
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, shape, shape);
         assertEquals(res, "screen with 2 shapes");
-        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, circle);
-        assertEquals(res, "screen with 2 shapes");
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, circle, shape);
         assertEquals(res, "screen with 2 shapes");
 
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line);
+        assertEquals(res, "screen with 1 lines");
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line, line);
+        assertEquals(res, "screen with 3 lines");
 
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, circle);
+        assertEquals(res, "screen with line and 1 shapes");
+
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, circle);
+        assertEquals(res, "screen with circle");
+
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line);
+        assertEquals(res, "screen with TWO lines");
+
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", line, line);
+        assertEquals(res, "2 shapes");
     }
 
     static class Drawer {
@@ -63,8 +75,8 @@ public class VariadicArgumentTest {
         public String draw(VariadicArgumentTest.Screen d, VariadicArgumentTest.Circle c) {
             return "screen with circle";
         }
-        public String draw(VariadicArgumentTest.Screen d, VariadicArgumentTest.Line c, VariadicArgumentTest.Line l) {
-            return "screen with 2 lines";
+        public String draw(VariadicArgumentTest.Screen d, VariadicArgumentTest.Line l1, VariadicArgumentTest.Line l2) {
+            return "screen with TWO lines";
         }
         public String draw(VariadicArgumentTest.Shape... s) {
             return String.format("%d shapes", s.length);
