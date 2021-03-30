@@ -1,7 +1,7 @@
 package ist.meic.pava.MultipleDispatch;
 
-public class TypeSpecificityComparator {
-    public static PartialOrdering compare(Class<?> lhs, Class<?> rhs) {
+public class TypeSpecificityComparator implements PartialComparator<Class<?>>{
+    public PartialOrdering compare(Class<?> lhs, Class<?> rhs) {
         if (lhs == rhs) {
             return PartialOrdering.EQUAL;
         }
