@@ -32,7 +32,7 @@ public class UsingMultipleDispatch {
             }
 
             // if the declaring class of lhs is a subtype of the declaring class of rhs, then lhs is less specific than rhs
-            PartialOrdering receiverPartialOrd = typeSpecificityComparator.compare(lhs.getClass(), rhs.getClass());
+            PartialOrdering receiverPartialOrd = typeSpecificityComparator.compare(lhs.getDeclaringClass(), rhs.getDeclaringClass());
             if (receiverPartialOrd != PartialOrdering.UNCOMPARABLE && receiverPartialOrd != PartialOrdering.EQUAL) {
                 return receiverPartialOrd;
             }
