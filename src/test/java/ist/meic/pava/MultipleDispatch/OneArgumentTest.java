@@ -19,7 +19,7 @@ public class OneArgumentTest {
     @ParameterizedTest
     @MethodSource("firstExampleTestCaseProvider")
     public void projectStatementFirstExampleExtended(Device dev, Shape shape, String expected) {
-        String res = (String) ist.meic.pava.UsingMultipleDispatchExtended.UsingMultipleDispatch.invoke(dev, "draw", shape);
+        String res = (String) ist.meic.pava.MultipleDispatchExtended.UsingMultipleDispatch.invoke(dev, "draw", shape);
         assertEquals(expected, res);
     }
 

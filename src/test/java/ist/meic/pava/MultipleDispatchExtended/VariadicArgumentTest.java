@@ -1,4 +1,4 @@
-package ist.meic.pava.UsingMultipleDispatchExtended;
+package ist.meic.pava.MultipleDispatchExtended;
 
 import org.junit.jupiter.api.Test;
 

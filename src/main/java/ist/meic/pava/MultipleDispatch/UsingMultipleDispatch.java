@@ -4,7 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class UsingMultipleDispatch {
-    private static final MethodSelector methodSelector = new MethodSelector(new MethodSpecificityComparator());
+    private static final MethodSelector methodSelector = new MethodSelector(new SimpleMethodSpecificityComparator());
 
     /**
      * Invokes the method with name and args of the receiver. Implements dynamic dispatch for the arguments.
@@ -23,31 +23,4 @@ public class UsingMultipleDispatch {
         }
     }
 
-    private static class MethodSpecificityComparator implements PartialComparator<Method> {
-        private static TypeSpecificityComparator typeSpecificityComparator = new TypeSpecificityComparator();
-
-        public PartialOrdering compare(Method lhs, Method rhs) {
-            if (lhs == rhs) {
-                return PartialOrdering.EQUAL;
-            }
-
-            // if the declaring class of lhs is a subtype of the declaring class of rhs, then lhs is less specific than rhs
-            PartialOrdering receiverPartialOrd = typeSpecificityComparator.compare(lhs.getDeclaringClass(), rhs.getDeclaringClass());
-            if (receiverPartialOrd != PartialOrdering.UNCOMPARABLE && receiverPartialOrd != PartialOrdering.EQUAL) {
-                return receiverPartialOrd;
-            }
-
-            Class<?>[] lhsParamTypes = lhs.getParameterTypes();
-            Class<?>[] rhsParamTypes = rhs.getParameterTypes();
-            for (int i = 0; i < lhsParamTypes.length; i++) {
-                PartialOrdering partialOrd = typeSpecificityComparator.compare(lhsParamTypes[i], rhsParamTypes[i]);
-
-                if (partialOrd != PartialOrdering.UNCOMPARABLE && partialOrd != PartialOrdering.EQUAL) {
-                    return partialOrd;
-                }
-            }
-
-            return PartialOrdering.UNCOMPARABLE;
-        }
-    }
 }

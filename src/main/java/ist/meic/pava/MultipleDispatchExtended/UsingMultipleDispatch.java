@@ -1,4 +1,4 @@
-package ist.meic.pava.UsingMultipleDispatchExtended;
+package ist.meic.pava.MultipleDispatchExtended;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Array;
@@ -6,9 +6,7 @@ import java.lang.reflect.Method;
 import java.util.function.Predicate;
 
 import ist.meic.pava.MultipleDispatch.MethodSelector;
-import ist.meic.pava.MultipleDispatch.PartialComparator;
 import ist.meic.pava.MultipleDispatch.PartialOrdering;
-import ist.meic.pava.MultipleDispatch.TypeSpecificityComparator;
 
 public class UsingMultipleDispatch {
     private static MethodSelector methodSelector = new MethodSelector(new VarargsAwareMethodComparator(),
@@ -80,37 +78,17 @@ public class UsingMultipleDispatch {
         return args;
     }
 
-    private static class VarargsAwareMethodComparator implements PartialComparator<Method> {
-        private static TypeSpecificityComparator typeSpecificityComparator = new TypeSpecificityComparator();
-
+    private static class VarargsAwareMethodComparator extends ist.meic.pava.MultipleDispatch.SimpleMethodSpecificityComparator {
         public PartialOrdering compare(Method lhs, Method rhs) {
-            if (lhs == rhs) {
-                return PartialOrdering.EQUAL;
-            }
-
-            // if the declaring class of lhs is a subtype of the declaring class of rhs,
-            // then lhs is less specific than rhs
-            PartialOrdering receiverPartialOrd = typeSpecificityComparator.compare(lhs.getDeclaringClass(),
-                    rhs.getDeclaringClass());
-            if (receiverPartialOrd != PartialOrdering.UNCOMPARABLE && receiverPartialOrd != PartialOrdering.EQUAL) {
-                return receiverPartialOrd;
-            }
-
-            Class<?>[] lhsParamTypes = lhs.getParameterTypes();
-            Class<?>[] rhsParamTypes = rhs.getParameterTypes();
-
-            for (int i = 0; i < lhsParamTypes.length && i < rhsParamTypes.length; i++) {
-                PartialOrdering partialOrd = typeSpecificityComparator.compare(lhsParamTypes[i], rhsParamTypes[i]);
-
-                if (partialOrd != PartialOrdering.UNCOMPARABLE && partialOrd != PartialOrdering.EQUAL) {
-                    return partialOrd;
-                }
+            PartialOrdering superOrd = super.compare(lhs, rhs);
+            if (superOrd != PartialOrdering.UNCOMPARABLE && superOrd != PartialOrdering.EQUAL) {
+                return superOrd;
             }
 
             // if lhs accepts less (non-varargs) parameters than rhs, then lhs is less
             // specific
-            int lhsNormalParamCount = lhsParamTypes.length;
-            int rhsNormalParamCount = rhsParamTypes.length;
+            int lhsNormalParamCount = lhs.getParameterCount();
+            int rhsNormalParamCount = rhs.getParameterCount();
             if (lhs.isVarArgs())
                 lhsNormalParamCount--;
             if (rhs.isVarArgs())

@@ -19,7 +19,7 @@ public class TwoArgumentsTest {
     @ParameterizedTest
     @MethodSource("secondExampleTestCaseProvider")
     public void testProjectStatementSecondExampleExtended(Device device, Shape shape, Brush brush, String expected) {
-        String res = (String) ist.meic.pava.UsingMultipleDispatchExtended.UsingMultipleDispatch.invoke(device, "draw", shape, brush);
+        String res = (String) ist.meic.pava.MultipleDispatchExtended.UsingMultipleDispatch.invoke(device, "draw", shape, brush);
         assertEquals(expected, res);
     }
 
