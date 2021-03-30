@@ -48,6 +48,13 @@ public class UsingMultipleDispatch {
         // k == n
         Class<?> lastParamType = method.getParameterTypes()[n - 1];
         Class<?> lastArgType = args[k - 1].getClass();
+
+        // we don't have access to the declared argument type before passing it to
+        // invoke()
+        // so we'll deviate from the spec here and only consider this argument as the
+        // varargs array
+        // if the array type is an exact match (that is if the type isn't equal, we
+        // build a new varargs array with this argument in it)
         return !lastParamType.isAssignableFrom(lastArgType);
     }
 
@@ -81,8 +88,10 @@ public class UsingMultipleDispatch {
                 return PartialOrdering.EQUAL;
             }
 
-            // if the declaring class of lhs is a subtype of the declaring class of rhs, then lhs is less specific than rhs
-            PartialOrdering receiverPartialOrd = typeSpecificityComparator.compare(lhs.getDeclaringClass(), rhs.getDeclaringClass());
+            // if the declaring class of lhs is a subtype of the declaring class of rhs,
+            // then lhs is less specific than rhs
+            PartialOrdering receiverPartialOrd = typeSpecificityComparator.compare(lhs.getDeclaringClass(),
+                    rhs.getDeclaringClass());
             if (receiverPartialOrd != PartialOrdering.UNCOMPARABLE && receiverPartialOrd != PartialOrdering.EQUAL) {
                 return receiverPartialOrd;
             }
@@ -98,11 +107,14 @@ public class UsingMultipleDispatch {
                 }
             }
 
-            // if lhs accepts less (non-varargs) parameters than rhs, then lhs is less specific
+            // if lhs accepts less (non-varargs) parameters than rhs, then lhs is less
+            // specific
             int lhsNormalParamCount = lhsParamTypes.length;
             int rhsNormalParamCount = rhsParamTypes.length;
-            if (lhs.isVarArgs()) lhsNormalParamCount--;
-            if (rhs.isVarArgs()) rhsNormalParamCount--;
+            if (lhs.isVarArgs())
+                lhsNormalParamCount--;
+            if (rhs.isVarArgs())
+                rhsNormalParamCount--;
             int comp = Integer.compare(lhsNormalParamCount, rhsNormalParamCount);
             if (comp < 0) {
                 return PartialOrdering.LESS;
@@ -110,7 +122,8 @@ public class UsingMultipleDispatch {
                 return PartialOrdering.GREATER;
             }
 
-            // if lhs accepts all arguments that rhs accepts plus varargs, lhs is less specific
+            // if lhs accepts all arguments that rhs accepts plus varargs, lhs is less
+            // specific
             if (lhs.isVarArgs() && !rhs.isVarArgs()) {
                 return PartialOrdering.LESS;
             } else if (!lhs.isVarArgs() && rhs.isVarArgs()) {

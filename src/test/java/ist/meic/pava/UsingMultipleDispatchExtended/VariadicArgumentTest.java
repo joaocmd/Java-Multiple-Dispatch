@@ -53,24 +53,24 @@ public class VariadicArgumentTest {
 
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen);
         assertEquals("screen with 0 lines", res);
-        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line);
-        assertEquals("screen with 1 lines", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line);
         assertEquals("screen with 2 lines", res);
-        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line, line);
-        assertEquals("screen with 3 lines", res);
     }
 
     @Test
     public void drawLineShapes() {
         String res;
 
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line);
+        assertEquals("screen with line and 0 shapes", res);
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, circle);
+        assertEquals("screen with line and 1 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, shape, shape);
         assertEquals("screen with line and 2 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, circle, line);
         assertEquals("screen with line and 2 shapes", res);
-        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, circle);
-        assertEquals("screen with line and 1 shapes", res);
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line, line);
+        assertEquals("screen with line and 2 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line, circle, shape);
         assertEquals("screen with line and 3 shapes", res);
     }
@@ -149,4 +149,35 @@ public class VariadicArgumentTest {
     static class Device {}
     static class Screen extends Device {}
     static class Printer extends Device {}
+
+    @Test
+    public void varargsPassArrayTest() {
+        VarargsPassArray instance = new VarargsPassArray();
+
+        // what we really want to do is to compare the version that passes
+        // through multiple dispatch with the one that does not, but that's hard
+        // to read to we compare everything twice instead
+        assertEquals(0, instance.countArgs());
+        assertEquals(1, instance.countArgs("asd"));
+        assertEquals(2, instance.countArgs("asd", "asd"));
+        assertEquals(2, instance.countArgs("asd", Integer.valueOf(1)));
+        assertEquals(2, instance.countArgs((Object[]) new String[]{"asd", "asd"}));
+
+        assertEquals(0, (Integer) UsingMultipleDispatch.invoke(instance, "countArgs"));
+        assertEquals(1, (Integer) UsingMultipleDispatch.invoke(instance, "countArgs", "asd"));
+        assertEquals(2, (Integer) UsingMultipleDispatch.invoke(instance, "countArgs", "asd", "asd"));
+        assertEquals(2, (Integer) UsingMultipleDispatch.invoke(instance, "countArgs", "asd", Integer.valueOf(1)));
+        assertEquals(2, (Integer) UsingMultipleDispatch.invoke(instance, "countArgs", (Object[]) new String[]{"asd", "asd"}));
+
+        // The only case where behavior does not match a regular invocation exactly
+        // invoke() sees the String[] as a String[] (not Object), no matter how much we cast it
+        assertEquals(1, instance.countArgs((Object) new String[]{"asd", "asd"}));
+        assertEquals(2, (Integer) UsingMultipleDispatch.invoke(instance, "countArgs", (Object) new String[]{"asd", "asd"}));
+    }
+
+    static class VarargsPassArray {
+        public Integer countArgs(Object... args) {
+            return Integer.valueOf(args.length);
+        }
+    }
 }
