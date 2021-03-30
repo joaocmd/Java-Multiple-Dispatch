@@ -3,6 +3,7 @@ package ist.meic.pava.MultipleDispatch;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class UsingMultipleDispatch {
@@ -20,12 +21,8 @@ public class UsingMultipleDispatch {
             final Class<?>[] argTypes = getArgTypes(args);
 
             Method bestMethod = Arrays.stream(receiver.getClass().getMethods())
-                .filter(method -> method.getName().equals(name))
-                .filter(method -> method.getParameterCount() == args.length)
-                .map(method -> CandidateMethod.create(method, argTypes))
-                .filter(Objects::nonNull)
-                .min(new CandidateMethodComparator())
-                .map(xmethod -> xmethod.method)
+                .filter(candidateMethodFilter(name, argTypes))
+                .max(new MethodSpecificityComparator())
                 .orElseThrow(() -> new NoSuchMethodException(buildNoSuchMethodExceptionMessage(receiver.getClass(), argTypes)));
 
             return bestMethod.invoke(receiver, args);
@@ -34,6 +31,61 @@ public class UsingMultipleDispatch {
                 | NoSuchMethodException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
+        }
+    }
+
+    private static Predicate<Method> candidateMethodFilter(String name, Class<?>[] argTypes) {
+        return new Predicate<Method>(){
+            public boolean test(Method m) {
+                if (m.getName() != name || argTypes.length != m.getParameterCount()) {
+                    return false;
+                }
+
+                Class<?>[] paramTypes = m.getParameterTypes();
+                for (int i = 0; i < paramTypes.length; i++) {
+                    if (!paramTypes[i].isAssignableFrom(argTypes[i])) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+        };
+    }
+
+    private static class MethodSpecificityComparator implements Comparator<Method> {
+        public int compare(Method lhs, Method rhs) {
+            Class<?>[] lhsParamTypes = lhs.getParameterTypes();
+            Class<?>[] rhsParamTypes = rhs.getParameterTypes();
+            TypeSpecifictyComparator typeComp = new TypeSpecifictyComparator();
+
+            for (int i = 0; i < lhsParamTypes.length; i++) {
+                Optional<Integer> partialOrd = typeComp.compare(lhsParamTypes[i], rhsParamTypes[i]);
+
+                if (partialOrd.isPresent() && partialOrd.get() != 0) {
+                    return partialOrd.get();
+                }
+            }
+
+            // we really can't do any better, just enforce any total order from here
+            return lhs.toString().compareTo(rhs.toString());
+        }
+    }
+
+    private static class TypeSpecifictyComparator {
+        public Optional<Integer> compare(Class<?> lhs, Class<?> rhs) {
+            if (lhs == rhs) {
+                return Optional.of(0);
+            }
+
+            if (lhs.isAssignableFrom(rhs)) {
+                return Optional.of(-1); // rhs is more specific
+            } else if (rhs.isAssignableFrom(lhs)) {
+                return Optional.of(1); // lhs is more specific
+            } else {
+                // equal specificity but not the same: incomparable
+                return Optional.empty();
+            }
         }
     }
 
@@ -51,65 +103,5 @@ public class UsingMultipleDispatch {
                         .map(Class::getName)
                         .collect(Collectors.joining(", ")) +
                 ')';
-    }
-
-    private static class CandidateMethodComparator implements Comparator<CandidateMethod> {
-        public int compare(CandidateMethod a, CandidateMethod b) {
-            int comp = Integer.compare(a.upcastCount(), b.upcastCount());
-            if (comp != 0) {
-                return comp;
-            }
-
-            for (int i = 0; i < a.upcasts.length && i < b.upcasts.length; i++) {
-                comp = Integer.compare(a.upcasts[i], b.upcasts[i]);
-                if (comp != 0) {
-                    return comp;
-                }
-            }
-
-            // we really can't do any better, just enforce any total order from here
-            return a.method.toString().compareTo(b.method.toString());
-        }
-    }
-
-    private static class CandidateMethod {
-        public Method method;
-        public int[] upcasts;
-
-        private CandidateMethod(Method method, int[] upcasts) {
-            this.method = method;
-            this.upcasts = upcasts;
-        }
-
-        static CandidateMethod create(Method method, Class<?>[] argTypes) {
-            int[] upcasts = new int[argTypes.length];
-            Class<?>[] paramTypes = method.getParameterTypes();
-
-            for (int i = 0; i < paramTypes.length; i++) {
-                Class<?> argType = argTypes[i];
-                Class<?> paramType = paramTypes[i];
-                while (argType != paramType && argType != Object.class) {
-                    argType = argType.getSuperclass();
-                    upcasts[i]++;
-                }
-
-                if (argType != paramType) {
-                    // argType is Object and they are incompatible
-                    return null;
-                }
-            }
-
-            return new CandidateMethod(method, upcasts);
-        }
-
-        public int upcastCount() {
-            return Arrays.stream(this.upcasts)
-                .reduce(0, Integer::sum);
-        }
-
-        @Override
-        public String toString() {
-            return this.method.toString();
-        }
     }
 }
