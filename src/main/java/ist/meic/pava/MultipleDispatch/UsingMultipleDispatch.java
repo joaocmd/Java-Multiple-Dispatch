@@ -31,9 +31,14 @@ public class UsingMultipleDispatch {
                 return PartialOrdering.EQUAL;
             }
 
+            // if the declaring class of lhs is a subtype of the declaring class of rhs, then lhs is less specific than rhs
+            PartialOrdering receiverPartialOrd = typeSpecificityComparator.compare(lhs.getClass(), rhs.getClass());
+            if (receiverPartialOrd != PartialOrdering.UNCOMPARABLE && receiverPartialOrd != PartialOrdering.EQUAL) {
+                return receiverPartialOrd;
+            }
+
             Class<?>[] lhsParamTypes = lhs.getParameterTypes();
             Class<?>[] rhsParamTypes = rhs.getParameterTypes();
-
             for (int i = 0; i < lhsParamTypes.length; i++) {
                 PartialOrdering partialOrd = typeSpecificityComparator.compare(lhsParamTypes[i], rhsParamTypes[i]);
 
