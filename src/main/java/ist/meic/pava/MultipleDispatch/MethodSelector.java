@@ -111,7 +111,7 @@ public class MethodSelector {
     }
 
     /**
-     * A MethodFilterFactory is an Object that can return a predicate for filtering Methods.
+     * A MethodFilterFactory is an Object that can return a predicate for filtering Methods into applicable methods.
      */
     public static interface MethodFilterFactory {
         /**
@@ -126,7 +126,7 @@ public class MethodSelector {
     }
 
     /**
-     * This is the simplest implementation of the MethodFilterFactory. Methods are considered candidates if:
+     * This is the simplest implementation of the MethodFilterFactory. Methods are considered applicable if:
      *  - The method's name matches the given name;
      *  - The receiverType is assignable to the Method type;
      *  - It has the same number of arguments as args and each arg is assignable to the corresponding argument.

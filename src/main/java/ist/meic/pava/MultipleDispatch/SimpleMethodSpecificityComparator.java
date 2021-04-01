@@ -2,6 +2,12 @@ package ist.meic.pava.MultipleDispatch;
 
 import java.lang.reflect.Method;
 
+/**
+ * This MethodSpecificityComparator is the base case for comparing two methods. A method m1 is considered more specific
+ * than method 2m when the declaring class of m1 is a subclass of m2. When the declaring classes are identical, then
+ * m1 is more specific than m2 if the type of the first parameter of m1 is a subtype of the type of the first parameter
+ * of m2. If these types are identical, then we repeat the process with the following parameters, from left to right.
+ */
 public class SimpleMethodSpecificityComparator implements PartialComparator<Method> {
     protected static TypeSpecificityComparator typeSpecificityComparator = new TypeSpecificityComparator();
 

@@ -18,10 +18,10 @@ public class UsingMultipleDispatch {
      * missing method, or exception of the invoked method.
      *
      * @param receiver the receiver object, that is, the object that contains the
-     *                 method
-     * @param name     the name of the method
-     * @param args     the arguments to pass to the method
-     * @return the object returned by the method called
+     *                 method.
+     * @param name the name of the method.
+     * @param args the arguments to pass to the method.
+     * @return the object returned by the method called.
      */
     public static Object invoke(Object receiver, String name, Object... args) {
         try {

@@ -9,10 +9,10 @@ public class UsingMultipleDispatch {
     /**
      * Invokes the method with name and args of the receiver. Implements dynamic dispatch for the arguments.
      * Throws RunTimeException on illegal access, missing method, or exception of the invoked method.
-     * @param receiver  the receiver object, that is, the object that contains the method
-     * @param name      the name of the method
-     * @param args      the arguments to pass to the method
-     * @return          the object returned by the method called
+     * @param receiver the receiver object, that is, the object that contains the method.
+     * @param name the name of the method.
+     * @param args the arguments to pass to the method.
+     * @return the object returned by the method called.
      */
     public static Object invoke(Object receiver, String name, Object... args) {
         try {
