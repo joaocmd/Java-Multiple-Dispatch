@@ -81,7 +81,7 @@ public class UsingMultipleDispatch {
     private static class VarargsAwareMethodComparator extends ist.meic.pava.MultipleDispatch.SimpleMethodSpecificityComparator {
         public PartialOrdering compare(Method lhs, Method rhs) {
             PartialOrdering superOrd = super.compare(lhs, rhs);
-            if (superOrd != PartialOrdering.UNCOMPARABLE && superOrd != PartialOrdering.EQUAL) {
+            if (superOrd != PartialOrdering.INCOMPARABLE && superOrd != PartialOrdering.EQUAL) {
                 return superOrd;
             }
 
@@ -108,7 +108,7 @@ public class UsingMultipleDispatch {
                 return PartialOrdering.GREATER;
             }
 
-            return PartialOrdering.UNCOMPARABLE;
+            return PartialOrdering.INCOMPARABLE;
         }
     }
 

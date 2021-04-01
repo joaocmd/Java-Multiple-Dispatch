@@ -32,7 +32,7 @@ public class MethodSelector {
             public int compare(Method lhs, Method rhs) {
                 PartialOrdering partialOrd = partialComparator.compare(lhs, rhs);
 
-                if (partialOrd == PartialOrdering.UNCOMPARABLE) {
+                if (partialOrd == PartialOrdering.INCOMPARABLE) {
                     // enforce some total order
                     return lhs.toString().compareTo(rhs.toString());
                 } else {

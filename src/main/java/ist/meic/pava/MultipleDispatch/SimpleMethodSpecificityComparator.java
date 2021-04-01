@@ -12,7 +12,7 @@ public class SimpleMethodSpecificityComparator implements PartialComparator<Meth
 
         // if the declaring class of lhs is a subtype of the declaring class of rhs, then lhs is less specific than rhs
         PartialOrdering receiverPartialOrd = typeSpecificityComparator.compare(lhs.getDeclaringClass(), rhs.getDeclaringClass());
-        if (receiverPartialOrd != PartialOrdering.UNCOMPARABLE && receiverPartialOrd != PartialOrdering.EQUAL) {
+        if (receiverPartialOrd != PartialOrdering.INCOMPARABLE && receiverPartialOrd != PartialOrdering.EQUAL) {
             return receiverPartialOrd;
         }
 
@@ -21,11 +21,11 @@ public class SimpleMethodSpecificityComparator implements PartialComparator<Meth
         for (int i = 0; i < lhsParamTypes.length && i < rhsParamTypes.length; i++) {
             PartialOrdering partialOrd = typeSpecificityComparator.compare(lhsParamTypes[i], rhsParamTypes[i]);
 
-            if (partialOrd != PartialOrdering.UNCOMPARABLE && partialOrd != PartialOrdering.EQUAL) {
+            if (partialOrd != PartialOrdering.INCOMPARABLE && partialOrd != PartialOrdering.EQUAL) {
                 return partialOrd;
             }
         }
 
-        return PartialOrdering.UNCOMPARABLE;
+        return PartialOrdering.INCOMPARABLE;
     }
 }
