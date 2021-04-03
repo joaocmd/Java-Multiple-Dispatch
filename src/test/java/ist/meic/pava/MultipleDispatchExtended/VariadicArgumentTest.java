@@ -53,23 +53,23 @@ public class VariadicArgumentTest {
 
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen);
         assertEquals("screen with 0 lines", res);
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line);
+        assertEquals("screen with 1 lines", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line);
         assertEquals("screen with 2 lines", res);
+        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line, line);
+        assertEquals("screen with 3 lines", res);
     }
 
     @Test
     public void drawLineShapes() {
         String res;
 
-        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line);
-        assertEquals("screen with line and 0 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, circle);
         assertEquals("screen with line and 1 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, shape, shape);
         assertEquals("screen with line and 2 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, circle, line);
-        assertEquals("screen with line and 2 shapes", res);
-        res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line, line);
         assertEquals("screen with line and 2 shapes", res);
         res = (String) UsingMultipleDispatch.invoke(d, "draw", screen, line, line, circle, shape);
         assertEquals("screen with line and 3 shapes", res);

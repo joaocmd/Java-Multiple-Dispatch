@@ -1,20 +1,31 @@
 package ist.meic.pava.MultipleDispatch;
 
 /**
- * This contains the PartialOrdering possible outcomes: LESS, GREATER or EQUAL. If the objects are not
- * comparable aren't any of the above, they are deemed INCOMPARABLE.
+ * The result of a comparison between two objects.
  */
 public enum PartialOrdering {
+    /**
+     * An ordering where the two values cannot be compared.
+     */
     INCOMPARABLE,
+    /**
+     * An ordering where a compared value is equal to another.
+     */
     EQUAL,
+    /**
+     * An ordering where a compared value is less than another.
+     */
     LESS,
+    /**
+     * An ordering where a compared value is greater than another.
+     */
     GREATER;
 
     /**
-     * Converts the PartialOrdering to an int that would be used by a function that requires ordering, such as sort,
-     * min or max.
-     * @return the int corresponding to the PartialOrdering.
-     * @throws UnsupportedOperationException if there is no total order.
+     * Casts the ordering to a total order (represented as an int in Java)
+     * @return the int corresponding to the ordering.
+     * @throws UnsupportedOperationException if there is no total order/the ordering was INCOMPARABLE.
+     * @see java.util.Comparator
      */
     public int asTotalOrdering() {
         switch (this) {

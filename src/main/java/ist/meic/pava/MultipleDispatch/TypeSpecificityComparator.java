@@ -1,18 +1,16 @@
 package ist.meic.pava.MultipleDispatch;
 
 /**
- * Compares the specificity of two Classes.
+ * The TypeSpecificityComparator performs a type comparison according to their
+ * subtype relationship.
+ *
+ * A type is considered lesser than other if and only if it is a superclass
+ * (or superinterface) of the other. When two types have no relationship with each
+ * other in the interface or class hierarchy, they are considered incomparable.
+ *
+ * Keep in mind that primitive types are not the same as their boxed versions.
  */
 public class TypeSpecificityComparator implements PartialComparator<Class<?>>{
-
-     /**
-     * Compares the specificity of two types. A type is equal to itself. If a type is assignable to another type, it
-     * is so a subclass or an interface implementation, which means that it is more specific. If none of these
-     * conditions are met, the types not comparable (e.g.: siblings or totally completely distinct classes).
-     * @param lhs the left hand side argument.
-     * @param rhs the right hand side argument.
-     * @return the partial ordering for the specificity of the two given classes.
-     */
     public PartialOrdering compare(Class<?> lhs, Class<?> rhs) {
         if (lhs == rhs) {
             return PartialOrdering.EQUAL;
