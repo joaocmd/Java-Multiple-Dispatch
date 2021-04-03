@@ -122,11 +122,8 @@ public class UsingMultipleDispatch {
      * size as the other method's parameter list.
      *
      * In particular, out of two equally specific methods m1 and m2 as per the
-     * simple comparator:
-     * - if m1 has less (non-vargs) formal parameters than m2, it is considered
-     *   less specific than m2;
-     * - and when they have the same number of (non-varargs) formal parameters,
-     *   the one that supports varargs is considered less specific.
+     * simple comparator,if m1 has less (non-vargs) formal parameters than m2,
+     * it is considered less specific than m2.
      */
     public static class VarargsAwareMethodComparator extends SimpleMethodSpecificityComparator {
         @Override
@@ -148,14 +145,6 @@ public class UsingMultipleDispatch {
             if (comp < 0) {
                 return PartialOrdering.LESS;
             } else if (comp > 0) {
-                return PartialOrdering.GREATER;
-            }
-
-            // if lhs accepts all arguments that rhs accepts plus varargs, lhs is less
-            // specific
-            if (lhs.isVarArgs() && !rhs.isVarArgs()) {
-                return PartialOrdering.LESS;
-            } else if (!lhs.isVarArgs() && rhs.isVarArgs()) {
                 return PartialOrdering.GREATER;
             }
 
