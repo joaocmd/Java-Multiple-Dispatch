@@ -3,14 +3,17 @@ package ist.meic.pava.MultipleDispatchExtended;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.util.function.Predicate;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 import ist.meic.pava.MultipleDispatch.MethodSelector;
 import ist.meic.pava.MultipleDispatch.PartialOrdering;
+import ist.meic.pava.MultipleDispatch.SimpleCandidateMethodFinder;
+import ist.meic.pava.MultipleDispatch.SimpleMethodSpecificityComparator;
 
 public class UsingMultipleDispatch {
     private static MethodSelector methodSelector = new MethodSelector(new VarargsAwareMethodComparator(),
-            new VarargsAwareCandidateMethodFilterFactory());
+            new VarargsAwareCandidateMethodFinder());
 
     /**
      * Invokes the method with name and args of the receiver. Implements dynamic
@@ -78,7 +81,7 @@ public class UsingMultipleDispatch {
         return args;
     }
 
-    private static class VarargsAwareMethodComparator extends ist.meic.pava.MultipleDispatch.SimpleMethodSpecificityComparator {
+    private static class VarargsAwareMethodComparator extends SimpleMethodSpecificityComparator {
         public PartialOrdering compare(Method lhs, Method rhs) {
             PartialOrdering superOrd = super.compare(lhs, rhs);
             if (superOrd != PartialOrdering.INCOMPARABLE && superOrd != PartialOrdering.EQUAL) {
@@ -112,57 +115,55 @@ public class UsingMultipleDispatch {
         }
     }
 
-    private static class VarargsAwareCandidateMethodFilterFactory implements MethodSelector.MethodFilterFactory {
-        public Predicate<Method> build(Object receiver, String name, Object[] args) {
-            Class<?>[] argTypes = MethodSelector.getArgTypes(args);
+    private static class VarargsAwareCandidateMethodFinder implements MethodSelector.CandidateMethodFinder {
+        public Stream<Method> findCandidates(Object receiver, String name, Object[] args) {
+            Class<?>[] argTypes = MethodSelector.getObjectTypes(args);
 
-            return method -> {
-                if (!method.getName().equals(name)) {
-                    return false;
-                }
+            return Arrays.stream(receiver.getClass().getMethods())
+                .filter(SimpleCandidateMethodFinder.NAME_FILTER.apply(name))
+                .filter(method -> {
+                    Class<?>[] paramTypes = method.getParameterTypes();
 
-                Class<?>[] paramTypes = method.getParameterTypes();
-
-                if ((method.isVarArgs() && paramTypes.length - 1 > argTypes.length)
-                        || (!method.isVarArgs() && paramTypes.length != argTypes.length)) {
-                    // normal case: argument and parameter count mismatch
-                    // if varargs: not enough non-vararg arguments
-                    return false;
-                }
-
-                // Check regular argument compatibility
-                int regularArgCount = method.isVarArgs() ? paramTypes.length - 1 : paramTypes.length;
-                for (int i = 0; i < regularArgCount; i++) {
-                    if (!paramTypes[i].isAssignableFrom(argTypes[i])) {
+                    if ((method.isVarArgs() && paramTypes.length - 1 > argTypes.length)
+                            || (!method.isVarArgs() && paramTypes.length != argTypes.length)) {
+                        // normal case: argument and parameter count mismatch
+                        // if varargs: not enough non-vararg arguments
                         return false;
                     }
-                }
 
-                // Check varargs compatibility
-                if (method.isVarArgs()) {
-                    int varargFirstIndex = paramTypes.length - 1;
-
-                    if (varargFirstIndex == argTypes.length) {
-                        // varargs method with no varargs supplied
-                        return true;
-                    }
-
-                    if (paramTypes.length == argTypes.length
-                            && paramTypes[varargFirstIndex].isAssignableFrom(argTypes[varargFirstIndex])) {
-                        // varargs method with args array supplied
-                        return true;
-                    }
-
-                    Class<?> varargType = paramTypes[varargFirstIndex].getComponentType();
-                    for (int i = varargFirstIndex; i < argTypes.length; i++) {
-                        if (!varargType.isAssignableFrom(argTypes[i])) {
+                    // Check regular argument compatibility
+                    int regularArgCount = method.isVarArgs() ? paramTypes.length - 1 : paramTypes.length;
+                    for (int i = 0; i < regularArgCount; i++) {
+                        if (!paramTypes[i].isAssignableFrom(argTypes[i])) {
                             return false;
                         }
                     }
-                }
 
-                return true;
-            };
+                    // Check varargs compatibility
+                    if (method.isVarArgs()) {
+                        int varargFirstIndex = paramTypes.length - 1;
+
+                        if (varargFirstIndex == argTypes.length) {
+                            // varargs method with no varargs supplied
+                            return true;
+                        }
+
+                        if (paramTypes.length == argTypes.length
+                                && paramTypes[varargFirstIndex].isAssignableFrom(argTypes[varargFirstIndex])) {
+                            // varargs method with args array supplied
+                            return true;
+                        }
+
+                        Class<?> varargType = paramTypes[varargFirstIndex].getComponentType();
+                        for (int i = varargFirstIndex; i < argTypes.length; i++) {
+                            if (!varargType.isAssignableFrom(argTypes[i])) {
+                                return false;
+                            }
+                        }
+                    }
+
+                    return true;
+                });
         }
     }
 }
