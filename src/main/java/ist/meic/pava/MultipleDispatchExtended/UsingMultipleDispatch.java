@@ -173,12 +173,14 @@ public class UsingMultipleDispatch {
                 int varargIdx = parameterTypes1.length - 1;
                 System.arraycopy(parameterTypes1, 0, newTypes, 0, varargIdx);
                 Arrays.fill(newTypes, varargIdx, newTypes.length - 1, parameterTypes1[varargIdx]);
+                parameterTypes1 = newTypes;
             }
             if (m2.isVarArgs() && parameterTypes2.length < parameterTypes1.length) {
                 Class<?>[] newTypes = new Class<?>[parameterTypes1.length];
                 int varargIdx = parameterTypes2.length - 1;
                 System.arraycopy(parameterTypes2, 0, newTypes, 0, varargIdx);
                 Arrays.fill(newTypes, varargIdx, newTypes.length - 1, parameterTypes2[varargIdx]);
+                parameterTypes2 = newTypes;
             }
 
             return new Class<?>[][] { parameterTypes1, parameterTypes2 };
@@ -204,7 +206,8 @@ public class UsingMultipleDispatch {
             Class<?>[] argTypes = MethodSelector.getObjectTypes(args);
 
             return Arrays.stream(receiver.getClass().getMethods())
-                    .filter(SimpleCandidateMethodFinder.NAME_FILTER.apply(name)).filter(method -> {
+                    .filter(SimpleCandidateMethodFinder.NAME_FILTER.apply(name))
+                    .filter(method -> {
                         Class<?>[] paramTypes = method.getParameterTypes();
 
                         if ((method.isVarArgs() && paramTypes.length - 1 > argTypes.length)
