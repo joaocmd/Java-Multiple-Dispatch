@@ -193,14 +193,14 @@ public class UsingMultipleDispatch {
                 Class<?>[] newTypes = new Class<?>[parameterTypes2.length];
                 int varargIdx = parameterTypes1.length - 1;
                 System.arraycopy(parameterTypes1, 0, newTypes, 0, varargIdx);
-                Arrays.fill(newTypes, varargIdx, newTypes.length - 1, parameterTypes1[varargIdx]);
+                Arrays.fill(newTypes, varargIdx, newTypes.length, parameterTypes1[varargIdx]);
                 parameterTypes1 = newTypes;
             }
             if (m2.isVarArgs() && parameterTypes2.length < parameterTypes1.length) {
                 Class<?>[] newTypes = new Class<?>[parameterTypes1.length];
                 int varargIdx = parameterTypes2.length - 1;
                 System.arraycopy(parameterTypes2, 0, newTypes, 0, varargIdx);
-                Arrays.fill(newTypes, varargIdx, newTypes.length - 1, parameterTypes2[varargIdx]);
+                Arrays.fill(newTypes, varargIdx, newTypes.length, parameterTypes2[varargIdx]);
                 parameterTypes2 = newTypes;
             }
 
