@@ -83,16 +83,16 @@ public class MethodSelector {
      * The algorithms controlling candidate method finding and comparison can be
      * selected during the construction of the MethodSelector instance.
      *
-     * @param receiver receiver object, where method would be called.
+     * @param receiverClass the class of the receiver object.
      * @param name name of the method to call.
      * @param args call arguments.
      * @return the selected Method
      * @throws NoSuchMethodException if no matching method could be found.
      */
-    public Method selectMethod(Object receiver, String name, Object... args) throws NoSuchMethodException {
-        return candidateSource.findCandidates(receiver, name, args)
+    public Method selectMethod(Class<?> receiverClass, String name, Object... args) throws NoSuchMethodException {
+        return candidateSource.findCandidates(receiverClass, name, args)
             .max(comparator)
-            .orElseThrow(() -> buildNoSuchMethodException(receiver.getClass(), args));
+            .orElseThrow(() -> buildNoSuchMethodException(receiverClass, args));
     }
 
     /**
@@ -181,12 +181,12 @@ public class MethodSelector {
          *
          * Applicability is left to each implementation of this interface to define.
          *
-         * @param receiver receiver object, which would invoke the method.
+         * @param receiverClass the class of the receiver which declares the method.
          * @param name name of the method to call.
          * @param args method call arguments.
          * @return stream of candidate methods
          */
-        public Stream<Method> findCandidates(Object receiver, String name, Object[] args);
+        public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args);
     }
 
 }

@@ -42,13 +42,31 @@ public class UsingMultipleDispatch {
      */
     public static Object invoke(Object receiver, String name, Object... args) {
         try {
-            Method method = methodSelector.selectMethod(receiver, name, args);
+            Method method = methodSelector.selectMethod(receiver.getClass(), name, args);
             return method.invoke(receiver, evaluateArguments(method, args));
         } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * Similar to the first version, but is intended to be used to call static methods.
+     * @param receiverClass the class of the receiver method.
+     * @param name the name of the method.
+     * @param args the arguments to pass to the method.
+     * @return the object returned by the method called.
+     */
+    public static Object invoke(Class<?> receiverClass, String name, Object... args) {
+        try {
+            Method method = methodSelector.selectMethod(receiverClass, name, args);
+            return method.invoke(null, evaluateArguments(method, args));
+        } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
+                | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     /**
      * Determines if the arguments list when calling a given method must be
@@ -202,10 +220,10 @@ public class UsingMultipleDispatch {
      *    of the component type of the last formal parameter (which will always be an array of some type).
      */
     public static class VarargsAwareCandidateMethodFinder implements MethodSelector.CandidateMethodFinder {
-        public Stream<Method> findCandidates(Object receiver, String name, Object[] args) {
+        public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args) {
             Class<?>[] argTypes = MethodSelector.getObjectTypes(args);
 
-            return Arrays.stream(receiver.getClass().getMethods())
+            return Arrays.stream(receiverClass.getMethods())
                     .filter(SimpleCandidateMethodFinder.NAME_FILTER.apply(name))
                     .filter(method -> {
                         Class<?>[] paramTypes = method.getParameterTypes();

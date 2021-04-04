@@ -25,7 +25,7 @@ public class UsingMultipleDispatch {
      */
     public static Object invoke(Object receiver, String name, Object... args) {
         try {
-            Method method = methodSelector.selectMethod(receiver, name, args);
+            Method method = methodSelector.selectMethod(receiver.getClass(), name, args);
             return method.invoke(receiver, args);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);

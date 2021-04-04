@@ -22,8 +22,8 @@ public class SimpleCandidateMethodFinder implements MethodSelector.CandidateMeth
         return m -> m.getName().equals(name);
     };
 
-    public Stream<Method> findCandidates(Object receiver, String name, Object[] args) {
-        return Arrays.stream(receiver.getClass().getMethods())
+    public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args) {
+        return Arrays.stream(receiverClass.getMethods())
             .filter(NAME_FILTER.apply(name))
             .filter(m -> {
                 // Confirm that all arguments are compatible with their respective parameters
