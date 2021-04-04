@@ -1,6 +1,7 @@
 package ist.meic.pava.MultipleDispatch;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -25,6 +26,7 @@ public class SimpleCandidateMethodFinder implements MethodSelector.CandidateMeth
     public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args) {
         return Arrays.stream(receiverClass.getMethods())
             .filter(NAME_FILTER.apply(name))
+            .filter(m -> !Modifier.isStatic(m.getModifiers()))
             .filter(m -> {
                 // Confirm that all arguments are compatible with their respective parameters
                 if (args.length != m.getParameterCount()) {

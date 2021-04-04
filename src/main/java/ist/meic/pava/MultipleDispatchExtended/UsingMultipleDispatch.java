@@ -3,6 +3,7 @@ package ist.meic.pava.MultipleDispatchExtended;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
@@ -26,8 +27,10 @@ import ist.meic.pava.MultipleDispatch.SimpleMethodSpecificityComparator;
  *      example of this edge case (varargsPassArrayTest)
  */
 public class UsingMultipleDispatch {
-    private static MethodSelector methodSelector = new MethodSelector(new VarargsAwareMethodComparator(),
-            new VarargsAwareCandidateMethodFinder());
+    private static MethodSelector staticMethodSelector = new MethodSelector(new VarargsAwareMethodComparator(),
+            new StaticVarargsAwareCandidateMethodFinder());
+    private static MethodSelector nonStaticMethodSelector = new MethodSelector(new VarargsAwareMethodComparator(),
+            new NonStaticVarargsAwareCandidateMethodFinder());
 
     /**
      * Invokes the method with name and args of the receiver. Implements dynamic
@@ -36,13 +39,13 @@ public class UsingMultipleDispatch {
      *
      * @param receiver the receiver object, that is, the object that contains the
      *                 method.
-     * @param name     the name of the method.
-     * @param args     the arguments to pass to the method.
+     * @param name the name of the method.
+     * @param args the arguments to pass to the method.
      * @return the object returned by the method called.
      */
     public static Object invoke(Object receiver, String name, Object... args) {
         try {
-            Method method = methodSelector.selectMethod(receiver.getClass(), name, args);
+            Method method = nonStaticMethodSelector.selectMethod(receiver.getClass(), name, args);
             return method.invoke(receiver, evaluateArguments(method, args));
         } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException e) {
@@ -52,14 +55,14 @@ public class UsingMultipleDispatch {
 
     /**
      * Similar to the first version, but is intended to be used to call static methods.
-     * @param receiverClass the class of the receiver method.
+     * @param receiverClass the class of the method.
      * @param name the name of the method.
      * @param args the arguments to pass to the method.
      * @return the object returned by the method called.
      */
-    public static Object invoke(Class<?> receiverClass, String name, Object... args) {
+    public static Object invokeStatic(Class<?> receiverClass, String name, Object... args) {
         try {
-            Method method = methodSelector.selectMethod(receiverClass, name, args);
+            Method method = staticMethodSelector.selectMethod(receiverClass, name, args);
             return method.invoke(null, evaluateArguments(method, args));
         } catch (NoSuchMethodException | IllegalAccessException | IllegalArgumentException
                 | InvocationTargetException e) {
@@ -219,7 +222,7 @@ public class UsingMultipleDispatch {
      *    If the method is varargs, all varargs arguments may also be a subclass/subinterface
      *    of the component type of the last formal parameter (which will always be an array of some type).
      */
-    public static class VarargsAwareCandidateMethodFinder implements MethodSelector.CandidateMethodFinder {
+    public abstract static class VarargsAwareCandidateMethodFinderBase implements MethodSelector.CandidateMethodFinder {
         public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args) {
             Class<?>[] argTypes = MethodSelector.getObjectTypes(args);
 
@@ -268,6 +271,22 @@ public class UsingMultipleDispatch {
 
                         return true;
                     });
+        }
+    }
+
+    public static class StaticVarargsAwareCandidateMethodFinder extends VarargsAwareCandidateMethodFinderBase {
+        @Override
+        public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args) {
+            return super.findCandidates(receiverClass, name, args)
+                .filter(m -> Modifier.isStatic(m.getModifiers()));
+        }
+    }
+
+    public static class NonStaticVarargsAwareCandidateMethodFinder extends VarargsAwareCandidateMethodFinderBase {
+        @Override
+        public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args) {
+            return super.findCandidates(receiverClass, name, args)
+                .filter(m -> !Modifier.isStatic(m.getModifiers()));
         }
     }
 }
