@@ -108,6 +108,45 @@ public class UsingMultipleDispatch {
      * @see https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.4.2
      * @param method method to call
      * @param args   arguments list
+    }
+
+    /**
+     * Determines if the arguments list when calling a given method must be
+     * rewritten as per JLS 15.12.4.2 in variadic method calls.
+     *
+     * @see https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.4.2
+     * @param method method to call
+     * @param args   arguments list
+     * @return true if the arguments list has to be rewritten
+     */
+    private static boolean shouldBuildVarargsArray(Method method, Object[] args) {
+        int k = args.length;
+        int n = method.getParameterCount();
+
+        if (k != n) {
+            return true;
+        }
+
+        // k == n
+        Class<?> lastParamType = method.getParameterTypes()[n - 1];
+        Class<?> lastArgType = args[k - 1].getClass();
+
+        // we don't have access to the declared argument type before passing it to
+        // invoke()
+        // so we'll deviate from the spec here and only consider this argument as the
+        // varargs array
+        // if the array type is an exact match (that is if the type isn't equal, we
+        // build a new varargs array with this argument in it)
+        return !lastParamType.isAssignableFrom(lastArgType);
+    }
+
+    /**
+     * Transforms the argument list for calling a given method as per JLS 15.12.4.2
+     * to support variadic method calls.
+     *
+     * @see https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.4.2
+     * @param method method to call
+     * @param args   arguments list
      * @return transformed arguments list as per JLS 15.12.4.2
      */
     private static Object[] evaluateArguments(Method method, Object[] args) {
@@ -241,7 +280,7 @@ public class UsingMultipleDispatch {
                         // Check regular argument compatibility
                         int regularArgCount = method.isVarArgs() ? paramTypes.length - 1 : paramTypes.length;
                         for (int i = 0; i < regularArgCount; i++) {
-                            if (!paramTypes[i].isAssignableFrom(argTypes[i])) {
+                            if (!PrimitiveTypesWrappers.isAssignableFrom(paramTypes[i], argTypes[i])) {
                                 return false;
                             }
                         }
