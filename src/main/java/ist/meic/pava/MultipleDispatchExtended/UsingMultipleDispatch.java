@@ -137,17 +137,22 @@ public class UsingMultipleDispatch {
 
     /**
      * The ExtendedMethodComparator extends the ordering defined by
-     * SimpleMethodSpecificityComparator with variadic arguments-specific details.
+     * SimpleMethodSpecificityComparator with variadic arguments-specific details,
+     * interface parameter support and automatic primitive boxing.
      *
      * The comparison criteria are as follows:
      * - if method b has a more specific receiver type than method a, b is more specific than a;
+     * - if so far both methods are equally specific, but method b's normalized argument
+     *   types are more specific than a's (when compared one by one from left to
+     *   right until two are non equal), then b is more specific;
+     *   (^ these two roughly match the behavior from SimpleMethodSpecificityComparator)
      * - if so far both methods are equally specific, but method b has more non-varargs
      *   formal parameters, then b is more specific;
      * - if so far both methods are equally specific, but method b is varargs and
-     *   a is not, then b is more specific;
-     * - if so far both methods are equally specific, but method b's normalized argument
-     *   types are more specific than a's (when compared one by one from left to
-     *   right until two are non equal), then b is more specific.
+     *   a is not, then b is more specific.
+     *
+     * @see ExtendedTypeSpecificityComparator
+     * @see ist.meic.pava.MultipleDispatch.SimpleMethodSpecificityComparator
      */
     public static class ExtendedMethodComparator implements PartialComparator<Method> {
         private static PartialComparator<Class<?>> typeComparator = new ExtendedTypeSpecificityComparator();
@@ -160,6 +165,11 @@ public class UsingMultipleDispatch {
             // if the declaring class of lhs is a subtype of the declaring class of rhs,
             // then lhs is less specific than rhs
             PartialOrdering p = typeComparator.compare(lhs.getDeclaringClass(), rhs.getDeclaringClass())
+                .mapEqual(() -> {
+                    Class<?>[] lhsNormalParams = getNormalizedParameterTypes(lhs, rhs);
+                    Class<?>[] rhsNormalParams = getNormalizedParameterTypes(rhs, lhs);
+                    return SimpleMethodSpecificityComparator.compareParameters(lhsNormalParams, rhsNormalParams, typeComparator);
+                })
                 // if lhs accepts less (non-varargs) parameters than rhs, then lhs is less
                 // specific
                 .mapEqual(() -> PartialOrdering.fromTotalOrdering(Integer.compare(getNormalParameterCount(lhs), getNormalParameterCount(rhs))))
@@ -172,11 +182,6 @@ public class UsingMultipleDispatch {
                     }
 
                     return PartialOrdering.EQUAL;
-                })
-                .mapEqual(() -> {
-                    Class<?>[] lhsNormalParams = getNormalizedParameterTypes(lhs, rhs);
-                    Class<?>[] rhsNormalParams = getNormalizedParameterTypes(rhs, lhs);
-                    return SimpleMethodSpecificityComparator.compareParameters(lhsNormalParams, rhsNormalParams, typeComparator);
                 });
 
             return p;
