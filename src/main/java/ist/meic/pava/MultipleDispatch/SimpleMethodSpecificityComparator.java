@@ -20,7 +20,7 @@ import java.lang.reflect.Method;
  * @see TypeSpecificityComparator for the subtype relationship implementation
  */
 public class SimpleMethodSpecificityComparator implements PartialComparator<Method> {
-    protected static TypeSpecificityComparator typeSpecificityComparator = new TypeSpecificityComparator();
+    private static PartialComparator<Class<?>> typeComparator = new TypeSpecificityComparator();
 
     public PartialOrdering compare(Method lhs, Method rhs) {
         if (lhs == rhs) {
@@ -29,35 +29,27 @@ public class SimpleMethodSpecificityComparator implements PartialComparator<Meth
 
         // if the declaring class of lhs is a subtype of the declaring class of rhs,
         // then lhs is less specific than rhs
-        PartialOrdering receiverPartialOrd = typeSpecificityComparator.compare(lhs.getDeclaringClass(),
-                rhs.getDeclaringClass());
-        if (receiverPartialOrd != PartialOrdering.EQUAL) {
-            return receiverPartialOrd;
-        }
+        return typeComparator.compare(lhs.getDeclaringClass(), rhs.getDeclaringClass())
+            .mapEqual(() -> compareParameters(lhs.getParameterTypes(), rhs.getParameterTypes(), typeComparator));
+    }
 
-        Class<?>[][] paramTypes = getParameterTypes(lhs, rhs);
-        Class<?>[] lhsParamTypes = paramTypes[0];
-        Class<?>[] rhsParamTypes = paramTypes[1];
-        for (int i = 0; i < lhsParamTypes.length && i < rhsParamTypes.length; i++) {
-            PartialOrdering partialOrd = typeSpecificityComparator.compare(lhsParamTypes[i], rhsParamTypes[i]);
+    /**
+     * Compares two parameter lists with a given type comparator.
+     *
+     * @param lhs left parameter list
+     * @param rhs right parameter list
+     * @param typeComparator a type (partial) comparator
+     * @return partial ordering of the two parameter lists
+     */
+    public static PartialOrdering compareParameters(Class<?>[] lhs, Class<?>[] rhs, PartialComparator<Class<?>> typeComparator) {
+        for (int i = 0; i < lhs.length && i < rhs.length; i++) {
+            PartialOrdering partialOrd = typeComparator.compare(lhs[i], rhs[i]);
 
             if (partialOrd != PartialOrdering.EQUAL) {
                 return partialOrd;
             }
         }
 
-        return PartialOrdering.INCOMPARABLE;
-    }
-
-    /**
-     * Obtains parameter types of the given methods. Can be overriden to influence
-     * comparison (say, when varargs or primitives are involved).
-     *
-     * @param m1 method
-     * @param m2 another method
-     * @return parameter types of given methods
-     */
-    protected Class<?>[][] getParameterTypes(Method m1, Method m2) {
-        return new Class<?>[][] { m1.getParameterTypes(), m2.getParameterTypes() };
+        return PartialOrdering.EQUAL;
     }
 }

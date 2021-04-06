@@ -1,3 +1,4 @@
+
 package ist.meic.pava.MultipleDispatchExtended;
 
 import java.lang.reflect.InvocationTargetException;
@@ -8,6 +9,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 import ist.meic.pava.MultipleDispatch.MethodSelector;
+import ist.meic.pava.MultipleDispatch.PartialComparator;
 import ist.meic.pava.MultipleDispatch.PartialOrdering;
 import ist.meic.pava.MultipleDispatch.SimpleCandidateMethodFinder;
 import ist.meic.pava.MultipleDispatch.SimpleMethodSpecificityComparator;
@@ -15,22 +17,24 @@ import ist.meic.pava.MultipleDispatch.SimpleMethodSpecificityComparator;
 /**
  * Implements dynamic dispatch on the arguments of a method call.
  *
- * Not guaranteed to autobox/unbox arguments. Supports calling methods with
- * variadic arguments with the same syntax as regular calls except for one case:
- * when passing exactly one array (T[]) after the non variadic arguments. In a
- * regular call, this array could be casted to the vararg type and would be
- * considered one of the varargs. When using this class, as long as T is
- * assignable to the vararg type, the array T[] will be treated as the container
- * of all variadic arguments.
+ * Supports calling methods with variadic arguments with the same syntax as regular
+ * calls except for one case: when passing exactly one array (T[]) after the non
+ * variadic arguments. In a regular call, this array could be casted to the vararg
+ * type and would be considered one of the varargs. When using this class, as long
+ * as T is assignable to the vararg type, the array T[] will be treated as the
+ * container of all variadic arguments.
  *
- * @see ist.meic.pava.MultipleDispatchExtended.VariadicArgumentTest for an
- *      example of this edge case (varargsPassArrayTest)
+ * Will automatically box/unbox arguments, except for variadic arguments, where
+ * the boxed versions must be used always.
+ *
+ * See ist.meic.pava.MultipleDispatchExtended.VariadicArgumentTest for an
+ *      example of this edge case (varargsPassArrayTest).
  */
 public class UsingMultipleDispatch {
-    private static MethodSelector staticMethodSelector = new MethodSelector(new VarargsAwareMethodComparator(),
-            new StaticVarargsAwareCandidateMethodFinder());
-    private static MethodSelector nonStaticMethodSelector = new MethodSelector(new VarargsAwareMethodComparator(),
-            new NonStaticVarargsAwareCandidateMethodFinder());
+    private static MethodSelector staticMethodSelector = new MethodSelector(new ExtendedMethodComparator(),
+            new StaticExtendedCandidateMethodFinder());
+    private static MethodSelector nonStaticMethodSelector = new MethodSelector(new ExtendedMethodComparator(),
+            new NonStaticExtendedCandidateMethodFinder());
 
     /**
      * Invokes the method with name and args of the receiver. Implements dynamic
@@ -75,7 +79,7 @@ public class UsingMultipleDispatch {
      * Determines if the arguments list when calling a given method must be
      * rewritten as per JLS 15.12.4.2 in variadic method calls.
      *
-     * @see https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.4.2
+     * See https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.4.2
      * @param method method to call
      * @param args   arguments list
      * @return true if the arguments list has to be rewritten
@@ -105,7 +109,7 @@ public class UsingMultipleDispatch {
      * Transforms the argument list for calling a given method as per JLS 15.12.4.2
      * to support variadic method calls.
      *
-     * @see https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.4.2
+     * See https://docs.oracle.com/javase/specs/jls/se7/html/jls-15.html#jls-15.12.4.2
      * @param method method to call
      * @param args   arguments list
      * @return transformed arguments list as per JLS 15.12.4.2
@@ -116,7 +120,6 @@ public class UsingMultipleDispatch {
             int varargsCount = args.length - nonVarargsCount;
 
             Class<?> varargsType = method.getParameterTypes()[nonVarargsCount];
-            assert varargsType.isArray();
             Object varargsArray = Array.newInstance(varargsType.getComponentType(), varargsCount);
             if (varargsCount != 0) {
                 System.arraycopy(args, nonVarargsCount, varargsArray, 0, varargsCount);
@@ -133,78 +136,92 @@ public class UsingMultipleDispatch {
     }
 
     /**
-     * The VarargsAwareMethodComparator extends the ordering defined by
+     * The ExtendedMethodComparator extends the ordering defined by
      * SimpleMethodSpecificityComparator with variadic arguments-specific details.
      *
-     * During the SimpleMethodSpecificityComparator comparison, the parameter lists
-     * for both methods are normalized when they support a variable number of
-     * parameters of type T: the new parameters list will contain all non-varargs
-     * parameters, and at least as many Ts as necessary in the end to be the same
-     * size as the other method's parameter list.
-     *
-     * In particular, out of two equally specific methods m1 and m2 as per the
-     * simple comparator,if m1 has less (non-vargs) formal parameters than m2,
-     * it is considered less specific than m2.
+     * The comparison criteria are as follows:
+     * - if method b has a more specific receiver type than method a, b is more specific than a;
+     * - if so far both methods are equally specific, but method b has more non-varargs
+     *   formal parameters, then b is more specific;
+     * - if so far both methods are equally specific, but method b is varargs and
+     *   a is not, then b is more specific;
+     * - if so far both methods are equally specific, but method b's normalized argument
+     *   types are more specific than a's (when compared one by one from left to
+     *   right until two are non equal), then b is more specific.
      */
-    public static class VarargsAwareMethodComparator extends SimpleMethodSpecificityComparator {
-        @Override
+    public static class ExtendedMethodComparator implements PartialComparator<Method> {
+        private static PartialComparator<Class<?>> typeComparator = new ExtendedTypeSpecificityComparator();
+
         public PartialOrdering compare(Method lhs, Method rhs) {
-            PartialOrdering superOrd = super.compare(lhs, rhs);
-            if (superOrd != PartialOrdering.EQUAL) {
-                return superOrd;
+            if (lhs == rhs) {
+                return PartialOrdering.EQUAL;
             }
 
-            // if lhs accepts less (non-varargs) parameters than rhs, then lhs is less
-            // specific
-            int lhsNormalParamCount = lhs.getParameterCount();
-            int rhsNormalParamCount = rhs.getParameterCount();
-            if (lhs.isVarArgs())
-                lhsNormalParamCount--;
-            if (rhs.isVarArgs())
-                rhsNormalParamCount--;
-            int comp = Integer.compare(lhsNormalParamCount, rhsNormalParamCount);
-            if (comp < 0) {
-                return PartialOrdering.LESS;
-            } else if (comp > 0) {
-                return PartialOrdering.GREATER;
-            }
+            // if the declaring class of lhs is a subtype of the declaring class of rhs,
+            // then lhs is less specific than rhs
+            PartialOrdering p = typeComparator.compare(lhs.getDeclaringClass(), rhs.getDeclaringClass())
+                // if lhs accepts less (non-varargs) parameters than rhs, then lhs is less
+                // specific
+                .mapEqual(() -> PartialOrdering.fromTotalOrdering(Integer.compare(getNormalParameterCount(lhs), getNormalParameterCount(rhs))))
+                .mapEqual(() -> {
+                    // if lhs is varargs and rhs is not, lhs is less specific
+                    if (lhs.isVarArgs() && !rhs.isVarArgs()) {
+                        return PartialOrdering.LESS;
+                    } else if (!lhs.isVarArgs() && rhs.isVarArgs()) {
+                        return PartialOrdering.GREATER;
+                    }
 
-            return PartialOrdering.INCOMPARABLE;
+                    return PartialOrdering.EQUAL;
+                })
+                .mapEqual(() -> {
+                    Class<?>[] lhsNormalParams = getNormalizedParameterTypes(lhs, rhs);
+                    Class<?>[] rhsNormalParams = getNormalizedParameterTypes(rhs, lhs);
+                    return SimpleMethodSpecificityComparator.compareParameters(lhsNormalParams, rhsNormalParams, typeComparator);
+                });
+
+            return p;
         }
 
-        @Override
-        protected Class<?>[][] getParameterTypes(Method m1, Method m2) {
-            Class<?>[] parameterTypes1 = m1.getParameterTypes();
-            Class<?>[] parameterTypes2 = m2.getParameterTypes();
+        /**
+         * Normalizes a method parameter list to erase varargs presence.
+         *
+         * The resulting parameter list will have at least as many parameters as
+         * the other method, and all parameters after the normal ones will the
+         * varargs type.
+         *
+         * @param method a method
+         * @param other the other method
+         * @return normalized parameter list of method
+         */
+        private static Class<?>[] getNormalizedParameterTypes(Method method, Method other) {
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            int lastIdx = parameterTypes.length - 1;
 
-            // treat varargs as any other args
-            if (m1.isVarArgs()) {
-                parameterTypes1[parameterTypes1.length - 1] = parameterTypes1[parameterTypes1.length - 1]
-                        .getComponentType();
-            }
-            if (m2.isVarArgs()) {
-                parameterTypes2[parameterTypes2.length - 1] = parameterTypes2[parameterTypes2.length - 1]
-                        .getComponentType();
-            }
+            if (method.isVarArgs()) {
+                // treat varargs as any other args
+                parameterTypes[lastIdx] = parameterTypes[lastIdx].getComponentType();
 
-            // expand method arguments list to match size of the other (varargs may have
-            // that many)
-            if (m1.isVarArgs() && parameterTypes1.length < parameterTypes2.length) {
-                Class<?>[] newTypes = new Class<?>[parameterTypes2.length];
-                int varargIdx = parameterTypes1.length - 1;
-                System.arraycopy(parameterTypes1, 0, newTypes, 0, varargIdx);
-                Arrays.fill(newTypes, varargIdx, newTypes.length, parameterTypes1[varargIdx]);
-                parameterTypes1 = newTypes;
-            }
-            if (m2.isVarArgs() && parameterTypes2.length < parameterTypes1.length) {
-                Class<?>[] newTypes = new Class<?>[parameterTypes1.length];
-                int varargIdx = parameterTypes2.length - 1;
-                System.arraycopy(parameterTypes2, 0, newTypes, 0, varargIdx);
-                Arrays.fill(newTypes, varargIdx, newTypes.length, parameterTypes2[varargIdx]);
-                parameterTypes2 = newTypes;
+                // expand method arguments list to match size of the other (varargs may have
+                // that many)
+                if (parameterTypes.length < other.getParameterCount()) {
+                    Class<?>[] newTypes = new Class<?>[other.getParameterCount()];
+                    System.arraycopy(parameterTypes, 0, newTypes, 0, lastIdx);
+                    Arrays.fill(newTypes, lastIdx, newTypes.length, parameterTypes[lastIdx]);
+                    parameterTypes = newTypes;
+                }
             }
 
-            return new Class<?>[][] { parameterTypes1, parameterTypes2 };
+            return parameterTypes;
+        }
+
+        private static int getNormalParameterCount(Method method) {
+            int paramCount = method.getParameterCount();
+
+            if (method.isVarArgs()) {
+                paramCount--;
+            }
+
+            return paramCount;
         }
     }
 
@@ -221,8 +238,11 @@ public class UsingMultipleDispatch {
      *    or is a superclass or superinterface of, the class of the corresponding argument.
      *    If the method is varargs, all varargs arguments may also be a subclass/subinterface
      *    of the component type of the last formal parameter (which will always be an array of some type).
+     *
+     * Primitive method parameter and argument types are normalized to their boxed
+     * versions before comparison (so they are indistinguishable).
      */
-    public abstract static class VarargsAwareCandidateMethodFinderBase implements MethodSelector.CandidateMethodFinder {
+    public abstract static class ExtendedCandidateMethodFinderBase implements MethodSelector.CandidateMethodFinder {
         public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args) {
             Class<?>[] argTypes = MethodSelector.getObjectTypes(args);
 
@@ -240,10 +260,8 @@ public class UsingMultipleDispatch {
 
                         // Check regular argument compatibility
                         int regularArgCount = method.isVarArgs() ? paramTypes.length - 1 : paramTypes.length;
-                        for (int i = 0; i < regularArgCount; i++) {
-                            if (!paramTypes[i].isAssignableFrom(argTypes[i])) {
-                                return false;
-                            }
+                        if (!isAssignableFrom(paramTypes, argTypes, 0, regularArgCount)) {
+                            return false;
                         }
 
                         // Check varargs compatibility
@@ -256,25 +274,53 @@ public class UsingMultipleDispatch {
                             }
 
                             if (paramTypes.length == argTypes.length
-                                    && paramTypes[varargFirstIndex].isAssignableFrom(argTypes[varargFirstIndex])) {
+                                    && isAssignableFrom(paramTypes[varargFirstIndex], argTypes[varargFirstIndex])) {
                                 // varargs method with args array supplied
                                 return true;
                             }
 
                             Class<?> varargType = paramTypes[varargFirstIndex].getComponentType();
-                            for (int i = varargFirstIndex; i < argTypes.length; i++) {
-                                if (!varargType.isAssignableFrom(argTypes[i])) {
-                                    return false;
-                                }
+                            if (!isAssignableFrom(varargType, argTypes, varargFirstIndex)) {
+                                return false;
                             }
                         }
 
                         return true;
                     });
         }
+
+        private static boolean isAssignableFrom(Class<?> lhs, Class<?> rhs) {
+            lhs = TypeNormalizer.boxed(lhs);
+            rhs = TypeNormalizer.boxed(rhs);
+
+            return lhs.isAssignableFrom(rhs);
+        }
+
+        private static boolean isAssignableFrom(Class<?> lhs, Class<?>[] rhs, int fromIndex) {
+            for (int i = fromIndex; i < rhs.length; i++) {
+                if (!isAssignableFrom(lhs, rhs[i])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static boolean isAssignableFrom(Class<?>[] lhs, Class<?>[] rhs, int fromIndex, int toIndex) {
+            for (int i = fromIndex; i < toIndex; i++) {
+                if (!isAssignableFrom(lhs[i], rhs[i])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 
-    public static class StaticVarargsAwareCandidateMethodFinder extends VarargsAwareCandidateMethodFinderBase {
+    /**
+     * ExtendedCandidateMethodFinder that only accepts static methods.
+     */
+    public static class StaticExtendedCandidateMethodFinder extends ExtendedCandidateMethodFinderBase {
         @Override
         public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args) {
             return super.findCandidates(receiverClass, name, args)
@@ -282,7 +328,10 @@ public class UsingMultipleDispatch {
         }
     }
 
-    public static class NonStaticVarargsAwareCandidateMethodFinder extends VarargsAwareCandidateMethodFinderBase {
+    /**
+     * ExtendedCandidateMethodFinder that only accepts non-static methods.
+     */
+    public static class NonStaticExtendedCandidateMethodFinder extends ExtendedCandidateMethodFinderBase {
         @Override
         public Stream<Method> findCandidates(Class<?> receiverClass, String name, Object[] args) {
             return super.findCandidates(receiverClass, name, args)
