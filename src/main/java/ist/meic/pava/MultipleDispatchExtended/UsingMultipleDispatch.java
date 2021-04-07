@@ -121,8 +121,9 @@ public class UsingMultipleDispatch {
 
             Class<?> varargsType = method.getParameterTypes()[nonVarargsCount];
             Object varargsArray = Array.newInstance(varargsType.getComponentType(), varargsCount);
-            if (varargsCount != 0) {
-                System.arraycopy(args, nonVarargsCount, varargsArray, 0, varargsCount);
+            for (int argsI = nonVarargsCount, varargsI = 0; argsI < args.length; argsI++, varargsI++) {
+                // can't use System.arraycopy when varargsArray is an array of primitives (args is always an array of objects)
+                Array.set(varargsArray, varargsI, args[argsI]);
             }
 
             Object[] newargs = new Object[method.getParameterCount()];
