@@ -24,8 +24,7 @@ import ist.meic.pava.MultipleDispatch.SimpleMethodSpecificityComparator;
  * as T is assignable to the vararg type, the array T[] will be treated as the
  * container of all variadic arguments.
  *
- * Will automatically box/unbox arguments, except for variadic arguments, where
- * the boxed versions must be used always.
+ * Will automatically box/unbox arguments.
  *
  * See ist.meic.pava.MultipleDispatchExtended.VariadicArgumentTest for an
  *      example of this edge case (varargsPassArrayTest).
